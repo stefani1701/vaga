@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<title>VAGA</title>
+<meta name="description" content="VAGA — training log, meal rotation, progress photos and body metrics. Offline, private, yours.">
+<meta name="theme-color" content="#07080F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VAGA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* ==========================================================
+   NEON PLATE — the palette encodes load, in light instead of
+   pigment. Lime = done / beaten. Cyan = cable. Magenta = free
+   weight, the heavy stuff. Violet = photos. Amber = attention.
+   Glow is a state, never decoration: a box lights up only when
+   it means something.
+   ========================================================== */
+:root{
+  --bg:#07080F; --surface:#101322; --surface2:#171B2E; --line:#242942; --line2:#1B2036;
+  --text:#EEF0FA; --muted:#8B90AD; --dim:#5A6080;
+  --lime:#C6FF3D; --cyan:#35E8F0; --mag:#FF3DA5; --vio:#9B5CFF; --amber:#FFB43D;
+  --bgc:#07080F;
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{
+  margin:0;background:
+    radial-gradient(900px 420px at 82% -8%, rgba(155,92,255,.16), transparent 62%),
+    radial-gradient(760px 380px at 6% 4%, rgba(53,232,240,.10), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--text);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-variant-numeric:tabular-nums;
+  padding-bottom:calc(70px + var(--safe-b));
+  overscroll-behavior-y:contain;
+}
+button,input,select,textarea{font:inherit;color:inherit;font-variant-numeric:tabular-nums}
+input,select,textarea{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+button{cursor:pointer}
+
+.card{
+  background:linear-gradient(168deg,var(--surface) 0%,#0C0F1B 100%);
+  border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:10px;
+  box-shadow:0 1px 0 rgba(255,255,255,.035) inset, 0 8px 26px rgba(0,0,0,.5);
+}
+.card.tight{padding:0;overflow:hidden}
+.glow-lime{border-color:rgba(198,255,61,.4);box-shadow:0 0 0 1px rgba(198,255,61,.14),0 0 26px rgba(198,255,61,.13),0 1px 0 rgba(255,255,255,.05) inset}
+.glow-cyan{border-color:rgba(53,232,240,.4);box-shadow:0 0 0 1px rgba(53,232,240,.14),0 0 26px rgba(53,232,240,.13),0 1px 0 rgba(255,255,255,.05) inset}
+.glow-mag{border-color:rgba(255,61,165,.42);box-shadow:0 0 0 1px rgba(255,61,165,.14),0 0 26px rgba(255,61,165,.13),0 1px 0 rgba(255,255,255,.05) inset}
+.glow-vio{border-color:rgba(155,92,255,.42);box-shadow:0 0 0 1px rgba(155,92,255,.14),0 0 26px rgba(155,92,255,.13),0 1px 0 rgba(255,255,255,.05) inset}
+.glow-amber{border-color:rgba(255,180,61,.42);box-shadow:0 0 0 1px rgba(255,180,61,.14),0 0 26px rgba(255,180,61,.13),0 1px 0 rgba(255,255,255,.05) inset}
+
+header{
+  position:sticky;top:0;z-index:40;background:rgba(7,8,15,.86);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid var(--line2);padding:calc(var(--safe-t) + 12px) 16px 12px;
+}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.5px}
+.eyebrow{font-size:10px;font-weight:800;letter-spacing:1.7px;text-transform:uppercase;color:var(--dim)}
+.hright{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.badge{font-size:10.5px;font-weight:800;letter-spacing:1px;padding:6px 10px;border-radius:99px;white-space:nowrap;
+  color:var(--lime);border:1px solid rgba(198,255,61,.35);box-shadow:0 0 16px rgba(198,255,61,.16) inset}
+#syncPill{font-size:8.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;
+  border-radius:6px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+#syncPill.g{color:var(--lime);border-color:rgba(198,255,61,.4)}
+#syncPill.c{color:var(--cyan);border-color:rgba(53,232,240,.4)}
+#syncPill.a{color:var(--amber);border-color:rgba(255,180,61,.4)}
+
+main{padding:14px 16px 30px;max-width:660px;margin:0 auto}
+section{display:none}
+section.on{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+h2{font-size:10.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:22px 0 9px}
+h2:first-child{margin-top:2px}
+.muted{color:var(--muted)} .small{font-size:12.5px;line-height:1.55}
+.tiny{font-size:11.5px;line-height:1.5;color:var(--muted)}
+.hint{font-size:11px;color:var(--dim);line-height:1.5}
+
+.rail{display:flex;gap:3px;margin-bottom:14px}
+.rail i{flex:1;height:5px;border-radius:3px;background:var(--line2);transition:all .25s}
+.rail i.f{background:var(--lime);box-shadow:0 0 10px rgba(198,255,61,.55)}
+.rail i.now{background:var(--cyan);box-shadow:0 0 12px rgba(53,232,240,.75)}
+
+.hero{position:relative;overflow:hidden;background:linear-gradient(160deg,#141830 0%,#0A0C16 100%);
+  border:1px solid var(--line);border-radius:var(--r);padding:17px;margin-bottom:12px;
+  box-shadow:0 10px 34px rgba(0,0,0,.55)}
+.hero::after{content:"";position:absolute;inset:-40% -30% auto auto;width:230px;height:230px;border-radius:50%;
+  background:var(--glowc,var(--cyan));opacity:.2;filter:blur(58px);pointer-events:none}
+.hero .lbl{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:var(--dim);font-weight:800}
+.hero .big{font-size:28px;font-weight:800;letter-spacing:-.9px;margin:4px 0 3px}
+.stripe{display:block;width:38px;height:4px;border-radius:3px;margin-bottom:11px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}
+.kpi b{display:block;font-size:17px;font-weight:800;letter-spacing:-.4px}
+.kpi span{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);font-weight:800}
+
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.chk{flex:1 1 calc(50% - 4px);display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:12px;transition:all .18s}
+.chk .b{width:19px;height:19px;border:2px solid var(--dim);border-radius:6px;flex:none;position:relative}
+.chk.on{border-color:rgba(198,255,61,.5);box-shadow:0 0 20px rgba(198,255,61,.14)}
+.chk.on .b{background:var(--lime);border-color:var(--lime);box-shadow:0 0 12px rgba(198,255,61,.6)}
+.chk.on .b::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid var(--bgc);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.chk span{font-size:13.5px;font-weight:600}
+
+.cal{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.cal i{aspect-ratio:1;border-radius:4px;background:var(--line2);border:1px solid transparent}
+.cal i.t{background:var(--lime);box-shadow:0 0 8px rgba(198,255,61,.5)}
+.cal i.w{background:rgba(53,232,240,.35)}
+.cal i.today{border-color:var(--text)}
+.callegend{display:flex;gap:14px;margin-top:9px;font-size:10.5px;color:var(--dim);font-weight:700;letter-spacing:.4px}
+.callegend b{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+.tabs{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 0}
+.tabs button{flex:none;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:9px 16px;font-size:13px;font-weight:700}
+.tabs button.on{background:var(--text);color:var(--bgc);border-color:var(--text);box-shadow:0 0 22px rgba(238,240,250,.22)}
+.seg{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:13px}
+.seg button{flex:1;background:none;border:0;border-radius:9px;padding:9px;font-size:13px;font-weight:700;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 18px rgba(53,232,240,.14),0 0 0 1px rgba(53,232,240,.3)}
+
+.ex{background:linear-gradient(168deg,var(--surface) 0%,#0C0F1B 100%);border:1px solid var(--line);
+  border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.ex.heavy{border-left:3px solid var(--mag);box-shadow:-6px 0 22px -8px rgba(255,61,165,.5),0 8px 24px rgba(0,0,0,.45)}
+.ex.cable{border-left:3px solid var(--cyan);box-shadow:-6px 0 22px -8px rgba(53,232,240,.5),0 8px 24px rgba(0,0,0,.45)}
+.exh{padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.exh .n{font-size:11px;font-weight:800;color:var(--dim);min-width:14px;padding-top:2px}
+.exh .t{flex:1}
+.exh .t b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.2px}
+.exh .t em{display:block;font-style:normal;font-size:11.5px;color:var(--muted);margin-top:2px}
+.pill{font-size:9px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;padding:4px 7px;border-radius:6px;white-space:nowrap}
+.pill.c{color:var(--cyan);border:1px solid rgba(53,232,240,.4);box-shadow:0 0 14px rgba(53,232,240,.16) inset}
+.pill.h{color:var(--mag);border:1px solid rgba(255,61,165,.4);box-shadow:0 0 14px rgba(255,61,165,.16) inset}
+.scheme{display:flex;gap:13px;padding:0 14px 10px;font-size:11.5px;color:var(--muted);font-weight:600}
+.scheme b{color:var(--text)}
+.why{padding:0 14px 11px;font-size:11.5px;line-height:1.5;color:var(--dim)}
+.sets{border-top:1px solid var(--line2)}
+.set{display:grid;grid-template-columns:24px 1fr 1fr 42px;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line2)}
+.set .si{font-size:11px;font-weight:800;color:var(--dim)}
+.set input{padding:8px;text-align:center;font-weight:700;font-size:15px}
+.set input::placeholder{color:var(--dim);font-weight:500}
+.set .tick{width:38px;height:36px;border:1px solid var(--line);background:var(--surface2);border-radius:9px;font-size:15px;line-height:1;color:var(--dim)}
+.set.done .tick{background:var(--lime);border-color:var(--lime);color:var(--bgc);box-shadow:0 0 16px rgba(198,255,61,.45)}
+.set.done input{border-color:rgba(198,255,61,.28)}
+.last{grid-column:2/5;font-size:11px;color:var(--dim);padding:0 0 4px}
+.last b{color:var(--amber)}
+.exfoot{display:flex;justify-content:space-between;padding:9px 14px;font-size:11px;font-weight:700;color:var(--dim);border-top:1px solid var(--line2)}
+.exfoot b{color:var(--text)}
+.exfoot .up{color:var(--lime)} .exfoot .dn{color:var(--mag)}
+
+#timer{position:fixed;left:12px;right:12px;bottom:calc(76px + var(--safe-b));z-index:60;
+  background:linear-gradient(150deg,#161B33,#0B0E1A);border:1px solid rgba(53,232,240,.45);
+  border-radius:16px;padding:12px 15px;display:none;align-items:center;justify-content:space-between;gap:10px;
+  box-shadow:0 0 40px rgba(53,232,240,.22),0 14px 40px rgba(0,0,0,.65)}
+#timer.on{display:flex}
+#timer b{font-size:26px;font-weight:800;letter-spacing:-1px;color:var(--cyan);text-shadow:0 0 18px rgba(53,232,240,.55)}
+#timer .lbl{font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+#timer button{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:9px 12px;font-weight:700;font-size:12.5px}
+.tpresets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px}
+.tpresets button{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px 4px;font-weight:800;font-size:14px}
+.tpresets button:active{border-color:var(--cyan)}
+.stopwatch{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stopwatch b{font-size:26px;font-weight:800;letter-spacing:-1px}
+
+.meal{background:linear-gradient(168deg,var(--surface) 0%,#0C0F1B 100%);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.mh{padding:12px 14px;display:flex;align-items:center;gap:11px}
+.mh .time{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--dim);min-width:38px}
+.mh .t{flex:1}
+.mh .t b{display:block;font-size:14.5px;font-weight:700}
+.mh .t em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.mh .mac{font-size:11.5px;font-weight:800;color:var(--amber);text-align:right;white-space:nowrap}
+.mh .mac span{display:block;color:var(--dim);font-weight:700}
+.mb{display:none;padding:0 14px 14px;border-top:1px solid var(--line2)}
+.meal.open .mb{display:block}
+.ing{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.ing:last-of-type{border-bottom:0}
+.ing i{font-style:normal;color:var(--muted);white-space:nowrap;font-weight:700}
+.how{margin-top:10px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.how b{color:var(--text)}
+.item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line2)}
+.item .b{width:18px;height:18px;border:2px solid var(--dim);border-radius:6px;flex:none;position:relative}
+.item.on{opacity:.38}
+.item.on .b{background:var(--lime);border-color:var(--lime)}
+.item.on .t b{text-decoration:line-through}
+.item .t{flex:1}
+.item .t b{font-size:13.5px;font-weight:600;display:block}
+.item .t em{font-style:normal;font-size:11px;color:var(--muted)}
+.item .q{font-size:12px;font-weight:700;color:var(--muted);text-align:right;white-space:nowrap}
+.item .q span{display:block;font-size:11px;color:var(--dim)}
+.sec{padding:10px 14px;background:var(--surface2);font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.ph{position:relative;aspect-ratio:3/4;border-radius:11px;overflow:hidden;background:var(--surface2);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .d{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;font-size:9.5px;font-weight:800;letter-spacing:.4px;
+  background:linear-gradient(transparent,rgba(0,0,0,.88));text-align:center;color:#fff}
+.ph .wk{position:absolute;top:5px;left:5px;font-size:8.5px;font-weight:800;letter-spacing:.6px;padding:3px 5px;border-radius:5px;background:rgba(7,8,15,.72);color:var(--vio)}
+.ph.sel{outline:2px solid var(--vio);outline-offset:-2px;box-shadow:0 0 22px rgba(155,92,255,.5)}
+.ph.sel::before{content:attr(data-order);position:absolute;top:5px;right:5px;z-index:2;width:20px;height:20px;border-radius:50%;
+  background:var(--vio);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.addph{aspect-ratio:3/4;border-radius:11px;border:1.5px dashed var(--line);background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--dim);font-size:11px;font-weight:700}
+.addph b{font-size:23px;line-height:1;color:var(--vio)}
+.empty{text-align:center;color:var(--dim);font-size:12.5px;padding:26px 16px;line-height:1.6}
+
+#viewer{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column}
+#viewer.on{display:flex}
+.vbars{display:flex;gap:4px;padding:calc(var(--safe-t) + 10px) 12px 8px}
+.vbars i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.22)}
+.vbars i.on{background:var(--lime);box-shadow:0 0 8px rgba(198,255,61,.6)}
+.vtop{display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px;font-size:12px;font-weight:700;color:#fff}
+.vtop button{background:none;border:0;color:#fff;font-size:20px;padding:4px 8px}
+#vimg{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+#vimg img{max-width:100%;max-height:100%;object-fit:contain}
+.vnav{position:absolute;inset:0;display:flex}
+.vnav div{flex:1}
+.vfoot{padding:12px 16px calc(var(--safe-b) + 16px);display:flex;justify-content:space-between;align-items:center;gap:12px;color:#fff}
+.vfoot .dt{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.vfoot .sub{font-size:11px;color:#9AA0BC;font-weight:600}
+.vfoot button{background:rgba(255,61,165,.14);border:1px solid rgba(255,61,165,.4);color:var(--mag);border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:700}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.cmp figure{margin:0}
+.cmp img{width:100%;border-radius:11px;display:block;border:1px solid var(--line)}
+.cmp figcaption{font-size:11px;font-weight:800;text-align:center;padding-top:6px;color:var(--muted);letter-spacing:.3px}
+.wipe{position:relative;border-radius:13px;overflow:hidden;border:1px solid var(--line);background:#000;touch-action:none}
+.wipe img{display:block;width:100%}
+.wipe .b{position:absolute;inset:0;overflow:hidden;width:50%}
+.wipe .b img{position:absolute;top:0;left:0;height:100%;width:auto;max-width:none}
+.wipe .hnd{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--lime);box-shadow:0 0 16px rgba(198,255,61,.8);pointer-events:none}
+.wipe .hnd::after{content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;
+  background:var(--lime);color:var(--bgc);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+.rowlbl{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--vio);margin:14px 0 7px}
+
+.entry{background:linear-gradient(168deg,var(--surface) 0%,#0C0F1B 100%);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;margin-bottom:9px}
+.entry .eh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:7px}
+.entry .eh b{font-size:14px;font-weight:800;letter-spacing:-.2px}
+.entry .eh em{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.7px;color:var(--dim)}
+.entry p{margin:0;font-size:13.5px;line-height:1.6;white-space:pre-wrap;color:var(--muted)}
+.entry .tags{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:800;letter-spacing:.6px;padding:4px 8px;border-radius:7px;border:1px solid var(--line);color:var(--muted)}
+.tag.hi{color:var(--lime);border-color:rgba(198,255,61,.35)}
+.tag.lo{color:var(--amber);border-color:rgba(255,180,61,.35)}
+.scale{display:flex;gap:6px}
+.scale button{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:10px 0;font-weight:800;font-size:14px;color:var(--muted)}
+.scale button.on{color:var(--bgc);background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 18px rgba(53,232,240,.4)}
+
+.row3{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+label{display:block;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.btn{background:var(--text);color:var(--bgc);border:0;border-radius:11px;padding:12px 16px;font-weight:800;font-size:14px;width:100%}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.neon{background:transparent;color:var(--lime);border:1px solid rgba(198,255,61,.45);box-shadow:0 0 24px rgba(198,255,61,.15)}
+.btn.red{background:transparent;color:var(--mag);border:1px solid rgba(255,61,165,.35)}
+svg.spark{width:100%;height:80px;display:block}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{padding:8px 5px;border-bottom:1px solid var(--line2);text-align:right}
+th{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:800}
+td:first-child,th:first-child{text-align:left}
+.note{background:linear-gradient(160deg,rgba(255,180,61,.09),transparent);border:1px solid rgba(255,180,61,.28);
+  border-left:3px solid var(--amber);border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.55;margin-bottom:10px}
+.note b{color:var(--amber)}
+.note.v{background:linear-gradient(160deg,rgba(155,92,255,.10),transparent);border-color:rgba(155,92,255,.3);border-left-color:var(--vio)}
+.note.v b{color:var(--vio)}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;background:rgba(7,8,15,.9);
+  -webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);
+  border-top:1px solid var(--line2);padding-bottom:var(--safe-b)}
+nav button{flex:1;background:none;border:0;padding:10px 1px 9px;color:var(--dim);font-size:8.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+nav button .ic{display:block;font-size:16px;line-height:1.2;margin-bottom:2px;opacity:.5}
+nav button.on{color:var(--text)}
+nav button.on .ic{opacity:1;text-shadow:0 0 14px currentColor}
+
+/* ---- LIGHT MODE: same semantics, pigment instead of light ---- */
+:root[data-theme="light"]{
+  --bg:#F3F4FA; --surface:#FFFFFF; --surface2:#EAECF6; --line:#D9DCEC; --line2:#E9EBF5;
+  --text:#12141F; --muted:#565C74; --dim:#878DA4; --bgc:#FFFFFF;
+  --lime:#4E9B00; --cyan:#0B8C99; --mag:#CE0069; --vio:#6A2FD4; --amber:#A96B00;
+}
+:root[data-theme="light"] body{background:
+  radial-gradient(900px 420px at 82% -8%, rgba(106,47,212,.09), transparent 62%),
+  radial-gradient(760px 380px at 6% 4%, rgba(11,140,153,.08), transparent 60%), var(--bg)}
+:root[data-theme="light"] .card,:root[data-theme="light"] .ex,
+:root[data-theme="light"] .meal,:root[data-theme="light"] .entry{
+  background:var(--surface);box-shadow:0 1px 2px rgba(20,24,50,.05),0 6px 18px rgba(20,24,50,.06)}
+:root[data-theme="light"] .hero{background:linear-gradient(160deg,#FFFFFF,#EFF1FA);box-shadow:0 8px 26px rgba(20,24,50,.09)}
+:root[data-theme="light"] .hero::after{opacity:.16}
+:root[data-theme="light"] header{background:rgba(243,244,250,.88)}
+:root[data-theme="light"] nav{background:rgba(243,244,250,.92)}
+:root[data-theme="light"] #timer{background:linear-gradient(150deg,#FFFFFF,#EEF0FA);box-shadow:0 0 30px rgba(11,140,153,.18),0 14px 34px rgba(20,24,50,.16)}
+:root[data-theme="light"] #timer b{text-shadow:none}
+:root[data-theme="light"] .rail i.f,:root[data-theme="light"] .rail i.now{box-shadow:none}
+:root[data-theme="light"] .chk.on,:root[data-theme="light"] .set.done .tick{box-shadow:none}
+:root[data-theme="light"] .glow-lime,:root[data-theme="light"] .glow-cyan,
+:root[data-theme="light"] .glow-mag,:root[data-theme="light"] .glow-vio,
+:root[data-theme="light"] .glow-amber{box-shadow:0 1px 2px rgba(20,24,50,.05),0 6px 18px rgba(20,24,50,.07)}
+:root[data-theme="light"] .ex.heavy,:root[data-theme="light"] .ex.cable{box-shadow:0 1px 2px rgba(20,24,50,.05),0 6px 18px rgba(20,24,50,.06)}
+:root[data-theme="light"] .note{background:rgba(169,107,0,.07)}
+:root[data-theme="light"] .note.v{background:rgba(106,47,212,.07)}
+:root[data-theme="light"] .sec{background:var(--surface2)}
+
+/* ---- recipe drawer ---- */
+#scrim{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .22s}
+#scrim.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(340px,86vw);z-index:80;
+  background:var(--surface);border-left:1px solid var(--line);transform:translateX(102%);
+  transition:transform .24s cubic-bezier(.3,.8,.3,1);display:flex;flex-direction:column;
+  box-shadow:-14px 0 44px rgba(0,0,0,.5)}
+#drawer.on{transform:none}
+.dhead{padding:calc(var(--safe-t) + 14px) 14px 10px;border-bottom:1px solid var(--line2)}
+.dhead .r{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.dhead b{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.dhead button{background:none;border:0;color:var(--muted);font-size:19px;padding:2px 6px}
+#drawerList{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--safe-b) + 14px)}
+.dsec{padding:11px 14px 7px;font-size:9.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+.drow{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line2);padding:11px 14px;color:var(--text)}
+.drow b{display:block;font-size:13.5px;font-weight:700}
+.drow em{display:block;font-style:normal;font-size:11.5px;color:var(--muted);margin:1px 0 3px}
+.drow span{font-size:11px;color:var(--dim);font-weight:700}
+.fab{position:fixed;right:16px;bottom:calc(82px + var(--safe-b));z-index:45;width:52px;height:52px;border-radius:50%;
+  background:var(--vio);color:#fff;border:0;font-size:21px;box-shadow:0 0 26px rgba(155,92,255,.5),0 10px 26px rgba(0,0,0,.45);display:none}
+.fab.on{display:block}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div>
+      <div class="eyebrow" id="eyebrow">Recomposition</div>
+      <h1 id="title">Today</h1>
+    </div>
+    <div class="hright">
+      <div class="badge" id="wkbadge">WK 1</div>
+      <div id="syncPill">Local only</div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== TODAY ===== -->
+<section id="s-today" class="on">
+  <div id="installBanner"></div>
+  <div class="rail" id="rail"></div>
+  <div class="hero">
+    <span class="stripe" id="heroStripe"></span>
+    <div class="lbl" id="heroLbl">Today</div>
+    <div class="big" id="heroBig">—</div>
+    <div class="small muted" id="heroSub">—</div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b id="kcalT">2400</b><span>kcal</span></div>
+    <div class="kpi"><b>185</b><span>protein</span></div>
+    <div class="kpi"><b id="streakN">0</b><span>streak</span></div>
+    <div class="kpi"><b id="sessN">0</b><span>sessions</span></div>
+  </div>
+  <h2>Daily non-negotiables</h2>
+  <div class="checks" id="dailyChecks"></div>
+  <h2>Trained / didn't — last 12 weeks</h2>
+  <div class="card">
+    <div class="cal" id="cal"></div>
+    <div class="callegend">
+      <span><b style="background:var(--lime)"></b>Lifted</span>
+      <span><b style="background:rgba(53,232,240,.35)"></b>Walk or rest, logged</span>
+      <span><b style="background:var(--line2)"></b>Nothing</span>
+    </div>
+    <div class="hint" style="margin-top:9px">Ticking any set marks the day automatically. Tap a square to set it by hand.</div>
+  </div>
+  <h2>This week</h2>
+  <div class="card small" id="weekNote"></div>
+</section>
+
+<!-- ===== TRAIN ===== -->
+<section id="s-train">
+  <div class="seg" id="trainSeg">
+    <button data-v="work" class="on">Session</button>
+    <button data-v="timer">Timer</button>
+  </div>
+
+  <div id="trainWork">
+    <div class="tabs" id="dayTabs"></div>
+    <div id="scoreCard"></div>
+    <div id="stallCard"></div>
+    <div id="deloadNote"></div>
+    <div class="note"><b>Magenta bar = free weight, keep it that way.</b> Cyan bar = cable, because constant tension beats dumbbells there. The five magenta lifts are the engine — a cable stack can't be loaded heavy enough to replace them.</div>
+    <div id="exList"></div>
+    <div class="card small muted">
+      <b style="color:var(--text)">Double progression.</b> Hit the <b style="color:var(--text)">top</b> of the rep range on every set at one weight → next session add 2.5&nbsp;kg upper / 5&nbsp;kg lower and drop to the bottom of the range. Stop each set 1–3 reps short, not at failure.
+    </div>
+  </div>
+
+  <div id="trainTimer" style="display:none">
+    <h2>Rest timer</h2>
+    <div class="tpresets">
+      <button onclick="startTimer(60)">60s</button>
+      <button onclick="startTimer(90)">90s</button>
+      <button onclick="startTimer(120)">2 min</button>
+      <button onclick="startTimer(180)">3 min</button>
+    </div>
+    <div class="card">
+      <label>Custom seconds</label>
+      <div class="row3">
+        <input id="customT" type="number" inputmode="numeric" placeholder="150" style="grid-column:1/3">
+        <button class="btn neon" style="width:auto;padding:12px 18px" onclick="startTimer(+document.getElementById('customT').value||0)">Start</button>
+      </div>
+      <div class="hint" style="margin-top:9px">Ticking a set starts this automatically at that exercise's prescribed rest.</div>
+    </div>
+    <h2>Session stopwatch</h2>
+    <div class="card glow-cyan">
+      <div class="stopwatch">
+        <div><div class="hint">Time in the gym</div><b id="swVal">0:00</b></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost" style="width:auto;padding:11px 14px" onclick="toggleSW()" id="swBtn">Start</button>
+          <button class="btn ghost" style="width:auto;padding:11px 14px" onclick="resetSW()">Reset</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px">Target 55–70 min including the warm-up. Past 80 and you're on your phone between sets.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOD ===== -->
+<section id="s-food">
+  <div class="seg" id="foodSeg">
+    <button data-v="meals" class="on">Meals</button>
+    <button data-v="recipes">Recipes</button>
+    <button data-v="shop">Shopping</button>
+  </div>
+
+  <div id="foodMeals">
+    <div class="tabs" id="mealWeekTabs"></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <div><b id="mwName" style="font-size:16px;letter-spacing:-.3px"></b><div class="tiny" id="mwTag"></div></div>
+        <div style="text-align:right;white-space:nowrap"><b id="mwKcal" style="color:var(--amber);font-size:15px"></b><div class="tiny" id="mwP"></div></div>
+      </div>
+    </div>
+    <div id="mealList"></div>
+    <h2>Sunday prep</h2>
+    <div class="card small" id="prepList"></div>
+    <div class="note" id="mwNote"></div>
+  </div>
+
+  <div id="foodRecipes" style="display:none">
+    <div id="recipeBrowse"></div>
+    <div id="recipeEdit" style="display:none"></div>
+    <div id="recipeOut" style="display:none"></div>
+    <div style="height:10px"></div>
+    <button class="btn ghost" onclick="backToRecipes()">All recipes</button>
+  </div>
+
+  <div id="foodShop" style="display:none">
+    <div class="tabs" id="shopWeekTabs"></div>
+    <div class="card glow-lime" style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="tiny">Estimated total</div><b id="shopTotal" style="font-size:21px;letter-spacing:-.6px"></b><div class="hint" id="shopMonth"></div></div>
+      <button class="btn ghost" style="width:auto" onclick="clearShop()">Reset</button>
+    </div>
+    <div class="card tight" id="shopList"></div>
+    <div id="budgetCard"></div>
+
+    <h2>My own list</h2>
+    <div class="card">
+      <div class="cmp" style="gap:8px;grid-template-columns:2fr 1fr">
+        <div><label>Item</label><input id="myN" placeholder="Kiseli kupus"></div>
+        <div><label>Qty</label><input id="myQ" placeholder="1 kg"></div>
+      </div>
+      <div style="height:9px"></div>
+      <div class="row3">
+        <div style="grid-column:1/3"><label>Price € (optional)</label><input id="myP" type="number" step="0.01" inputmode="decimal" placeholder="2.40"></div>
+        <button class="btn neon" style="width:auto;padding:12px 18px" onclick="addMy()">Add</button>
+      </div>
+    </div>
+    <div class="card tight" id="myShopList"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+      <b class="tiny" id="myShopTotal"></b>
+      <button class="btn ghost" style="width:auto;padding:9px 13px;font-size:12.5px" onclick="clearMyDone()">Clear ticked</button>
+    </div>
+    <div class="note"><b>Metro:</b> anyone can shop there — it's the pre-PDV wholesale price that needs a business account, so check whether your employer's OIB gets you a card. Otherwise Lidl and Eurospin beat it on most of this list.</div>
+  </div>
+</section>
+
+<!-- ===== PHOTOS ===== -->
+<section id="s-photos">
+  <div class="seg" id="phSeg">
+    <button data-v="front" class="on">Front</button>
+    <button data-v="side">Side</button>
+    <button data-v="back">Back</button>
+    <button data-v="cmp">Compare</button>
+  </div>
+
+  <div id="phGridWrap">
+    <div class="note v" id="phNote"></div>
+    <div class="grid" id="phGrid"></div>
+    <input type="file" id="phInput" accept="image/*" style="display:none">
+    <div style="height:12px"></div>
+    <button class="btn ghost" id="selBtn" onclick="toggleSelect()">Select two to compare</button>
+  </div>
+
+  <div id="phCompare" style="display:none">
+    <h2>Compare two days — all three angles</h2>
+    <div class="card">
+      <div class="cmp" style="gap:10px">
+        <div><label>Earlier day</label><select id="dayA"></select></div>
+        <div><label>Later day</label><select id="dayB"></select></div>
+      </div>
+      <button class="btn neon" onclick="renderDayCompare()">Show both days</button>
+    </div>
+    <div id="dayCmpOut"></div>
+  </div>
+</section>
+
+<!-- ===== DIARY ===== -->
+<section id="s-diary">
+  <div class="card">
+    <label>How did today go</label>
+    <textarea id="dText" placeholder="Bench felt heavy but the last set moved. Slept badly. Skipped the walk."></textarea>
+    <div style="height:12px"></div>
+    <label>Energy in the gym</label>
+    <div class="scale" id="dEnergy"></div>
+    <div style="height:12px"></div>
+    <label>Hours of sleep</label>
+    <input id="dSleep" type="number" step="0.5" inputmode="decimal" placeholder="7.5">
+    <div style="height:12px"></div>
+    <button class="btn" onclick="saveEntry()">Save today's entry</button>
+    <div class="hint" style="margin-top:9px">Saving again on the same day overwrites it. This is the thing that tells you <i>why</i> a bad week was bad.</div>
+  </div>
+  <h2>Entries</h2>
+  <div id="diaryList"></div>
+</section>
+
+<!-- ===== ME ===== -->
+<section id="s-me">
+  <h2>Log this morning</h2>
+  <div class="card">
+    <div class="row3">
+      <div><label id="lbW">Weight</label><input id="inW" type="number" step="0.1" inputmode="decimal" placeholder="84.6"></div>
+      <div><label id="lbWa">Waist</label><input id="inWa" type="number" step="0.1" inputmode="decimal" placeholder="88.0"></div>
+      <button class="btn" style="width:auto;padding:12px 18px" onclick="addBody()">Save</button>
+    </div>
+    <div class="hint" style="margin-top:10px">After the toilet, before food or water. Tape at the navel, relaxed, normal exhale — don't suck in.</div>
+  </div>
+
+  <h2>Waist — your real metric</h2>
+  <div class="card glow-lime"><svg class="spark" id="sparkWaist" viewBox="0 0 300 80" preserveAspectRatio="none"></svg><div class="tiny" id="waistDelta"></div></div>
+  <h2>Weight</h2>
+  <div class="card"><svg class="spark" id="sparkW" viewBox="0 0 300 80" preserveAspectRatio="none"></svg><div class="tiny" id="wDelta"></div></div>
+  <h2>Estimated 1RM — the strength that proves it's muscle</h2>
+  <div class="card"><div id="e1rm"></div></div>
+  <h2>History</h2>
+  <div class="card tight"><table id="bodyTable"></table></div>
+
+  <h2>Cloud backup</h2>
+  <div class="card" id="syncBox"></div>
+
+  <h2>Settings</h2>
+  <div class="card" id="settingsBox"></div>
+
+  <h2>Widgets &amp; lock screen</h2>
+  <div class="note v"><b>Read this before you go looking in Settings.</b> No web app can draw a home screen or lock screen widget — that needs native code on both platforms (WidgetKit on iOS, AppWidgetProvider on Android). What you can have free in about a minute is a one-tap launcher.
+  <div style="margin-top:8px"><b style="color:var(--text)">iPhone:</b> Shortcuts → new shortcut → action "Open URL" → paste this app's address. Then long-press the Lock Screen → Customise → add a <b>Shortcuts</b> widget and pick it.</div>
+  <div style="margin-top:6px"><b style="color:var(--text)">Android:</b> installing from Chrome already gives you a real app icon in the drawer and its own window. For a widget proper, wrapping this in a Trusted Web Activity and paying Google's one-time $25 is the cheap route — Google supports that officially, Apple does not.</div></div>
+
+  <h2>Program</h2>
+  <div class="card">
+    <label>Week 1 started on (a Monday)</label>
+    <input id="startDate" type="date" onchange="setStart(this.value)">
+    <div class="hint" style="margin-top:9px">Training week, meal rotation and shopping list all derive from this.</div>
+  </div>
+
+  <h2>Manual backup</h2>
+  <div class="card">
+    <button class="btn ghost" onclick="exportData()">Export logs, diary and measurements</button>
+    <div style="height:9px"></div>
+    <label>Import a backup</label>
+    <input type="file" accept="application/json" onchange="importData(this)">
+    <div style="height:13px"></div>
+    <button class="btn red" onclick="wipe()">Erase everything on this device</button>
+    <div class="hint" style="margin-top:10px" id="storeNote"></div>
+  </div>
+</section>
+
+</main>
+
+<div id="timer">
+  <div><div class="lbl">Rest</div><b id="tval">0:00</b></div>
+  <div style="display:flex;gap:7px">
+    <button onclick="addRest(30)">+30s</button>
+    <button onclick="stopTimer()">Skip</button>
+  </div>
+</div>
+
+<div id="viewer">
+  <div class="vbars" id="vbars"></div>
+  <div class="vtop"><span id="vfolder"></span><button onclick="closeViewer()">✕</button></div>
+  <div id="vimg"><img id="vimgel" alt="Progress photo"><div class="vnav"><div onclick="stepViewer(-1)"></div><div onclick="stepViewer(1)"></div></div></div>
+  <div class="vfoot">
+    <div><div class="dt" id="vdate"></div><div class="sub" id="vsub"></div></div>
+    <button onclick="deleteCurrent()">Delete</button>
+  </div>
+</div>
+
+<div id="scrim" onclick="closeDrawer()"></div>
+<aside id="drawer">
+  <div class="dhead">
+    <div class="r"><b>Recipes</b><button onclick="closeDrawer()">✕</button></div>
+    <input id="dq" placeholder="Search saved recipes" oninput="drawerQ=this.value;renderDrawer()">
+  </div>
+  <div id="drawerList"></div>
+</aside>
+<button class="fab" id="fab" onclick="openDrawer()">☰</button>
+
+<nav>
+  <button data-t="today" class="on"><span class="ic">◎</span>Today</button>
+  <button data-t="train"><span class="ic">▦</span>Train</button>
+  <button data-t="food"><span class="ic">◍</span>Food</button>
+  <button data-t="photos"><span class="ic">▣</span>Photos</button>
+  <button data-t="diary"><span class="ic">✎</span>Diary</button>
+  <button data-t="me"><span class="ic">↗</span>Me</button>
+</nav>
+
+<script>
+/*__DATA__*/
+/*__REC__*/
+/*__SYNC__*/
+/*__APP__*/
+</script>
+</body>
+</html>

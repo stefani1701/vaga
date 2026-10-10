@@ -1,0 +1,17 @@
+{
+  "name": "VAGA — 16 week recomposition",
+  "short_name": "VAGA",
+  "description": "Training log, 4-week meal rotation, shopping lists, progress photos and body metrics. Offline, private, yours.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07080F",
+  "theme_color": "#07080F",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
