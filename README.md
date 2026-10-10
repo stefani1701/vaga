@@ -9,9 +9,11 @@ your food, your body, and the bar.
 
 ---
 
+**Live:** https://stefani1701.github.io/vaga/
+
 ## Install it on your phone
 
-1. Open the published URL **in a browser on the phone**
+1. Open https://stefani1701.github.io/vaga/ **in a browser on the phone**
 2. **iPhone:** Share → *Add to Home Screen*. **Android:** menu → *Install app*
 3. Open it from the icon, not from the browser
 
@@ -48,13 +50,13 @@ browser as a cache:
 
 ### Setting it up (two minutes, once)
 
-1. Create a **private** repo for your data — e.g. `yourname/vaga-data`.
-   Keep it separate from the repo this app is published from.
+1. A **private** repo for your data — [`stefani1701/vaga-data`](https://github.com/stefani1701/vaga-data)
+   already exists and is separate from this one.
 2. github.com → Settings → Developer settings → **Fine-grained tokens** →
    Generate new token.
    - Repository access: **Only select repositories** → your data repo
    - Permissions: **Contents → Read and write**. Nothing else.
-3. In the app: **Me → Cloud backup**, paste the repo name and the token, Connect.
+3. In the app: **Me → Cloud backup**, enter `stefani1701/vaga-data` and the token, Connect.
 
 The token is kept in its own browser key. It is never committed, never included
 in an exported backup, and never leaves your device except as an `Authorization`
