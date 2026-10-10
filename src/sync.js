@@ -41,10 +41,28 @@ function gh(path,opts){
 }
 function ghGet(path){
   return gh(path).then(r=>{
-    if(r.status===404)return null;
+    if(r.status===404)return null;   // may mean "no such file" OR "no access" — preflight() tells them apart
     if(!r.ok)throw new Error('GitHub '+r.status+(r.status===401?' — token rejected':r.status===403?' — no access to that repo, or rate limited':''));
     return r.json();
   });
+}
+
+/* GitHub answers 404 rather than 403 for a repo a token cannot see, so a bare
+   404 is ambiguous. Ask about the repo itself once per repo and say which it is. */
+async function preflight(){
+  if(S.sync.verified===S.sync.repo)return;
+  const r=await fetch('https://api.github.com/repos/'+S.sync.repo,{headers:{
+    'Authorization':'Bearer '+ghToken(),'Accept':'application/vnd.github+json',
+    'X-GitHub-Api-Version':'2022-11-28'}});
+  if(r.status===401)throw new Error('Token rejected (401). It is mistyped, expired, or has been revoked.');
+  if(r.status===404)throw new Error('This token cannot see '+S.sync.repo+' (404). Either the repo name is wrong, or the token was not granted access to it — a fine-grained token only covers the repos picked when it was created, and a classic token needs the full "repo" scope for a private repo.');
+  if(r.status===403)throw new Error('Forbidden (403). Rate limited, or the token is blocked for this repo.');
+  if(!r.ok)throw new Error('GitHub '+r.status+' asking about '+S.sync.repo);
+  const info=await r.json();
+  if(info.permissions && info.permissions.push===false)
+    throw new Error('The token can read '+S.sync.repo+' but not write to it. Set its Contents permission to "Read and write".');
+  S.sync.verified=S.sync.repo; S.sync.branch=info.default_branch||S.sync.branch||'main';
+  Store.set('vaga',S);
 }
 function ghPut(path,contentB64,sha,msg){
   return gh(path,{init:{
@@ -81,6 +99,7 @@ async function syncNow(silent){
   if(syncBusy)return;
   syncBusy=true; setStatus('Syncing…','c');
   try{
+    await preflight();
     const remote=await ghGet('vaga-data.json');
     let remoteState=null, sha=null;
     if(remote){
@@ -198,8 +217,9 @@ function renderSync(){
 function saveSync(){
   S.sync=S.sync||{};
   S.sync.repo=$('#syRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,'');
-  const t=$('#syTok').value.trim();
+  const t=$('#syTok').value.trim().replace(/^["'<]+|["'>]+$/g,'');
   if(t && !/^•+$/.test(t))setGhToken(t);
+  S.sync.verified=null;          // re-check the repo whenever either half changes
   save();
   if(!syncReady()){setStatus('Fill in both the repo and the token');renderSync();return}
   renderSync(); syncNow();
