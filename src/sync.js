@@ -58,9 +58,11 @@ async function preflight(){
   if(r.status===404)throw new Error('This token cannot see '+S.sync.repo+' (404). Either the repo name is wrong, or the token was not granted access to it — a fine-grained token only covers the repos picked when it was created, and a classic token needs the full "repo" scope for a private repo.');
   if(r.status===403)throw new Error('Forbidden (403). Rate limited, or the token is blocked for this repo.');
   if(!r.ok)throw new Error('GitHub '+r.status+' asking about '+S.sync.repo);
+  /* Deliberately not trusting info.permissions here: for a fine-grained token
+     that field reports the *account's* access to the repo, not what the token
+     is scoped to do, so a read-only token still shows push:true. Only the write
+     itself can answer that, and ghPut explains a 403 properly. */
   const info=await r.json();
-  if(info.permissions && info.permissions.push===false)
-    throw new Error('The token can read '+S.sync.repo+' but not write to it. Set its Contents permission to "Read and write".');
   S.sync.verified=S.sync.repo; S.sync.branch=info.default_branch||S.sync.branch||'main';
   Store.set('vaga',S);
 }
@@ -71,7 +73,17 @@ function ghPut(path,contentB64,sha,msg){
              'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},
     body:JSON.stringify(Object.assign({message:msg,content:contentB64},sha?{sha}:{}))
   }}).then(r=>{
-    if(!r.ok)return r.json().catch(()=>({})).then(j=>{throw new Error('GitHub '+r.status+(j.message?' — '+j.message:''))});
+    if(!r.ok)return r.json().catch(()=>({})).then(j=>{
+      if(r.status===403&&/rate limit|abuse|secondary/i.test(j.message||''))
+        throw new Error('GitHub is rate limiting this token (403: '+j.message+'). Nothing is wrong with your setup — wait a few minutes and it will sync on its own.');
+      if(r.status===403)throw new Error('GitHub refused the write (403'+(j.message?': '+j.message:'')+
+        '). The token can read '+S.sync.repo+' but not write to it. On a fine-grained token this is the '+
+        'Contents permission: open the token on GitHub, Repository permissions → Contents → "Read and write", '+
+        'then Save. On a classic token it needs the whole "repo" scope.');
+      if(r.status===409)throw new Error('Write conflict (409) — something else changed the file. It will retry on the next sync.');
+      if(r.status===422)throw new Error('GitHub rejected the file (422'+(j.message?': '+j.message:'')+').');
+      throw new Error('GitHub '+r.status+(j.message?' — '+j.message:''));
+    });
     return r.json();
   });
 }
@@ -136,8 +148,9 @@ async function syncNow(silent){
     S.sync.last=Date.now(); Store.set('vaga',S);
     setStatus('Synced','g'); renderSync(); lastPull=Date.now();
   }catch(e){
-    setStatus(String(e.message||e).slice(0,70),'a');
-    const d=$('#syncStatus'); if(d)d.textContent=String(e.message||e);
+    setStatus('Sync failed','a');
+    const d=$('#syncStatus');
+    if(d){d.textContent=String(e.message||e); d.style.color='var(--amber)'}
   }
   syncBusy=false;
 }
